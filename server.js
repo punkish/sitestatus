@@ -1,9 +1,14 @@
 var express = require('express')
-var app = express()
 var async = require('async')
 var request = require('request')
 var pg = require('pg')
+var hogan = require('hogan')
 var credentials = require('./credentials')
+
+var app = express()
+app.set('views', __dirname + '/templates')
+app.set('view engine', 'hjs')
+
 
 // Shortcut for querying postgres
 function queryPg(sql, params, callback) {
@@ -34,8 +39,8 @@ function get(app, snap_id, callback) {
     } else {
       status = 1
     }
-
-    queryPg('INSERT INTO application_status (app_id, snap_id, status) VALUES ($1, $2, $3)', [app.app_id, snap_id, status], function(error) {
+    var et = (response && response.elapsedTime) ? response.elapsedTime : null
+    queryPg('INSERT INTO application_status (app_id, snap_id, status, response_time) VALUES ($1, $2, $3, $4)', [app.app_id, snap_id, status, et], function(error) {
       if (error) console.log(error);
       return callback(null)
     })
@@ -69,8 +74,46 @@ function update() {
 setInterval(update, 15000);
 
 app.get('/', function(req, res, next) {
-  queryPg('SELECT * FROM application_status', [], function(error, result) {
-    res.json(result.rows)
+  queryPg(`
+    SELECT
+     applications.app_id,
+     category,
+     name,
+     uri,
+     status
+    FROM applications
+    JOIN (
+      SELECT app_id, status
+      FROM application_status
+      WHERE snap_id = (
+        SELECT snap_id
+        FROM snapshots
+        ORDER BY start_time DESC
+        LIMIT 1
+      )
+    ) statuses ON applications.app_id = statuses.app_id
+    ORDER BY applications.app_id ASC
+  `, [], function(error, result) {
+
+    var categories = {}
+    result.rows.forEach(function(d) {
+      d._class = (d.status === 1) ? 'ion-ios-checkmark' : ((d.status === 0) ? 'ion-ios-help' : 'ion-ios-minus')
+      if (categories[d.category]) {
+        categories[d.category].push(d)
+      } else {
+        categories[d.category] = [d]
+      }
+    })
+
+    var formatted = []
+    Object.keys(categories).forEach(function(d) {
+      formatted.push({
+        name: d,
+        apps: categories[d]
+      })
+    })
+
+    res.render('main', {data: formatted})
   })
 })
 
@@ -79,7 +122,7 @@ app.port = process.argv[2] || 5678;
 
 app.start = function() {
   app.listen(app.port, function() {
-    console.log("Listening on port " + app.port);
+    console.log(`Listening on port ${app.port}`);
   });
 }
 

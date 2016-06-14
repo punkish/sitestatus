@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="initial-scale=1, maximum-scale=1, user-scalable=yes, width=device-width">
+    <title>Macrostrat Status</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/skeleton/2.0.4/skeleton.min.css" rel="stylesheet">
+    <link href="http://code.ionicframework.com/ionicons/2.0.1/css/ionicons.min.css" rel="stylesheet">
+    <style>
+      .ion-ios-checkmark {
+        color: #45BF55;
+      }
+      .ion-ios-help {
+        color: #FFB03B
+      }
+      .ion-ios-minus {
+        color: #D90000;
+      }
+      .right {
+        text-align: right;
+      }
+      .u-full-width {
+
+      }
+      .content {
+        margin: 0 auto;
+        max-width: 500px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="content">
+    {{#data}}
+    <h3>{{name}}</h3>
+    <table class="u-full-width">
+      <tbody>
+        {{#apps}}
+        <tr>
+          <td>{{name}}</td>
+          <td class="right"><i class="ion {{_class}}"></i></td>
+        </tr>
+        {{/apps}}
+      </tbody>
+    </table>
+    {{/data}}
+  </div>
+  </body>
+</html>

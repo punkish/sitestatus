@@ -8,10 +8,11 @@
     "start": "node server.js"
   },
   "author": "John J Czaplewski <jczaplew@gmail.com>",
-  "license": "ISC",
+  "license": "CC-BY",
   "dependencies": {
     "async": "^2.0.0-rc.6",
     "express": "^4.13.4",
+    "hjs": "0.0.6",
     "pg": "^5.0.0",
     "request": "^2.72.0"
   }
