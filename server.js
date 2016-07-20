@@ -11,9 +11,10 @@ app.set('view engine', 'hjs')
 
 var errors = {}
 
+var password = (credentials.password) ? ':' + credentials.password : ''
 // Shortcut for querying postgres
 function queryPg(sql, params, callback) {
-  pg.connect(`postgres://${credentials.user}@${credentials.host}/${credentials.database}`, function(err, client, done) {
+  pg.connect(`postgres://${credentials.user}${credentials.password}@${credentials.host}/${credentials.database}`, function(err, client, done) {
     if (err) { return callback(err) }
 
     client.query(sql, params, function(err, result) {
