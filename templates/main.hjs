@@ -5,7 +5,7 @@
     <meta name="viewport" content="initial-scale=1, maximum-scale=1, user-scalable=yes, width=device-width">
     <title>Macrostrat Status</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/skeleton/2.0.4/skeleton.min.css" rel="stylesheet">
-    <link href="http://code.ionicframework.com/ionicons/2.0.1/css/ionicons.min.css" rel="stylesheet">
+    <link href="https://code.ionicframework.com/ionicons/2.0.1/css/ionicons.min.css" rel="stylesheet">
     <style>
       .ion-ios-checkmark {
         color: #45BF55;
@@ -33,11 +33,19 @@
     {{#data}}
     <h3>{{name}}</h3>
     <table class="u-full-width">
+      <thead>
+        <tr>
+          <td>name</td>
+          <td>health</td>
+          <td>avg response</td>
+        </tr>
+      </thead>
       <tbody>
         {{#apps}}
         <tr>
           <td>{{name}}</td>
           <td class="right"><i class="ion {{_class}}"></i></td>
+          <td>{{mean_response}}<small>ms</small></td>
         </tr>
         {{/apps}}
       </tbody>

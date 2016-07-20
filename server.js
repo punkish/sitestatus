@@ -9,6 +9,7 @@ var app = express()
 app.set('views', __dirname + '/templates')
 app.set('view engine', 'hjs')
 
+var errors = {}
 
 // Shortcut for querying postgres
 function queryPg(sql, params, callback) {
@@ -23,6 +24,29 @@ function queryPg(sql, params, callback) {
   })
 }
 
+function notifyFailure(app, code) {
+  // Ignore if we have already been notified of this error
+  if (errors[app.name]) {
+    return
+  }
+  errors[app.name] = true
+
+  var msg = app.name + ' encountered a ' + code + ' status code when making a request to ' + app.uri
+  request({
+    uri: 'https://api.telegram.org/bot269291694:AAFqndaV1PEGcXPlipPS7ZgbyVnmNjlAO5w/sendMessage?chat_id=-134845112&text=' + msg
+  })
+}
+
+function notifyFix(app, status) {
+  errors[app.name] = false
+
+  var msg = app.name + ' is back online' + ((status === 0) ? ', but is responding slowly' : ' and responding normally')
+
+  request({
+    uri: 'https://api.telegram.org/bot269291694:AAFqndaV1PEGcXPlipPS7ZgbyVnmNjlAO5w/sendMessage?chat_id=-134845112&text=' + msg
+  })
+}
+
 // Update a given app's status
 function get(app, snap_id, callback) {
   request({
@@ -34,10 +58,17 @@ function get(app, snap_id, callback) {
 
     if (error || response.statusCode != 200 || response.headers['content-length'] < 50) {
       status = -1
+      notifyFailure(app, response.statusCode)
     } else if (response.elapsedTime > (app.timeout || 1500)) {
       status = 0
+      if (errors[app.name]) {
+        notifyFix(app, status)
+      }
     } else {
       status = 1
+      if (errors[app.name]) {
+        notifyFix(app, status)
+      }
     }
     var et = (response && response.elapsedTime) ? response.elapsedTime : null
     queryPg('INSERT INTO application_status (app_id, snap_id, status, response_time) VALUES ($1, $2, $3, $4)', [app.app_id, snap_id, status, et], function(error) {
@@ -58,7 +89,7 @@ function update() {
     },
 
     function(callback) {
-      queryPg('SELECT app_id, uri, timeout FROM applications', [], function(error, result) {
+      queryPg('SELECT app_id, name, uri, timeout FROM applications', [], function(error, result) {
         async.each(result.rows, function(app, cb) {
           get(app, snap_id, cb)
         }, function(error, done) {
@@ -80,7 +111,8 @@ app.get('/', function(req, res, next) {
      category,
      name,
      uri,
-     status
+     status,
+     rt.mean_response
     FROM applications
     JOIN (
       SELECT app_id, status
@@ -92,6 +124,11 @@ app.get('/', function(req, res, next) {
         LIMIT 1
       )
     ) statuses ON applications.app_id = statuses.app_id
+    JOIN (
+      SELECT app_id, avg(response_time)::int mean_response
+      FROM application_status
+      GROUP BY app_id
+    ) rt ON rt.app_id = applications.app_id
     ORDER BY applications.app_id ASC
   `, [], function(error, result) {
 
