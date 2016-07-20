@@ -100,11 +100,11 @@ function update() {
       })
     }
   ], function(error) {
-    console.log('Done updating')
+  //  console.log('Done updating')
   })
 }
 
-setInterval(update, 15000);
+setInterval(update, 60000);
 
 app.get('/', function(req, res, next) {
   queryPg(`
