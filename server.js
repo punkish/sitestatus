@@ -59,7 +59,8 @@ function get(app, snap_id, callback) {
 
     if (error || response.statusCode != 200 || response.headers['content-length'] < 50) {
       status = -1
-      notifyFailure(app, response.statusCode || 500)
+      var statusCode = (response && response.statusCode) ? response.statusCode : 500
+      notifyFailure(app, statusCode)
     } else if (response.elapsedTime > (app.timeout || 1500)) {
       status = 0
       if (errors[app.name]) {
