@@ -1,56 +1,41 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="initial-scale=1, maximum-scale=1, user-scalable=yes, width=device-width">
-    <title>Macrostrat Status</title>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/skeleton/2.0.4/skeleton.min.css" rel="stylesheet">
-    <link href="https://code.ionicframework.com/ionicons/2.0.1/css/ionicons.min.css" rel="stylesheet">
-    <style>
-      .ion-ios-checkmark {
-        color: #45BF55;
-      }
-      .ion-ios-help {
-        color: #FFB03B
-      }
-      .ion-ios-minus {
-        color: #D90000;
-      }
-      .right {
-        text-align: right;
-      }
-      .u-full-width {
-
-      }
-      .content {
-        margin: 0 auto;
-        max-width: 500px;
-      }
-    </style>
-  </head>
-  <body>
-    <div class="content">
-    {{#data}}
-    <h3>{{name}}</h3>
-    <table class="u-full-width">
-      <thead>
-        <tr>
-          <td>name</td>
-          <td>health</td>
-          <td>avg response</td>
-        </tr>
-      </thead>
-      <tbody>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="initial-scale=1, maximum-scale=1, user-scalable=yes, width=device-width">
+        <title>websites status</title>
+        <link href="https://cdnjs.cloudflare.com/ajax/libs/skeleton/2.0.4/skeleton.min.css" rel="stylesheet">
+        <style>
+            .ok { color: #45BF55; }
+            .slow { color: #FFB03B }
+            .bad { color: #D90000; }
+            .right { text-align: right; }
+            .content { margin: 0 auto; max-width: 500px; }
+        </style>
+    </head>
+    <body>
+        <div class="content">
         {{#apps}}
-        <tr>
-          <td>{{name}}</td>
-          <td class="right"><i class="ion {{_class}}"></i></td>
-          <td>{{mean_response}}<small>ms</small></td>
-        </tr>
+        <h3><a href="{{uri}}" target="_blank">{{name}}</a></h3>
+        <table class="u-full-width">
+            <thead>
+                <tr>
+                    <th>timestamp</th>
+                    <th>status</th>
+                    <th>response</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{#data}}
+                <tr>
+                    <td>{{ts}}</td>
+                    <td class="right"><span class="{{_class}}">{{status}}</span></td>
+                    <td>{{response_time}}</td>
+                </tr>
+                {{/data}}
+            </tbody>
+        </table>
         {{/apps}}
-      </tbody>
-    </table>
-    {{/data}}
-  </div>
-  </body>
+    </div>
+    </body>
 </html>

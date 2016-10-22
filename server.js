@@ -1,173 +1,177 @@
 var express = require('express')
-var async = require('async')
 var request = require('request')
-var pg = require('pg')
-var hogan = require('hogan')
-var credentials = require('./credentials')
+
+var websites = [
+    {
+        name : 'TreatmentBank',
+        uri : 'http://tb.plazi.org/GgServer/static/newToday.html'
+    },
+    {
+        name : 'Plazi',
+        uri : 'http://plazi.org'
+    }
+]
+var bot = '253125261:AAGHnpONfoGVLFUT6ZbCSsLrkayN3r4_uis'
+var chat_id = '64476661'
+
+/*
+ * The only way to get a chat_id for the message seems to be to send a `getUpdates` 
+ * command to the bot via the api and look for the chat id in the response. For example
+ * 
+ * https://api.telegram.org/bot253125261:AAGHnpONfoGVLFUT6ZbCSsLrkayN3r4_uis/getUpdates
+ * 
+ * returns the following
+ * 
+ * {
+ *      "ok":true,
+ *      "result":{
+ *          "message_id":3,
+ *          "from":{
+ *              "id":253125261,
+ *              "first_name":"PlaziStatus",
+ *              "username":"PlaziStatusBot"
+ *          },
+ *          "chat":{"
+ *              id":64476661,
+ *              "first_name":"punkish",
+ *              "username":"punkish",
+ *              "type":"private"
+ *          },
+ *          "date":1477158841,
+ *          "text":"hello from Puneet"
+ *      }
+ * }
+ * 
+ * The chat_id I am looking for is 64476661
+ * 
+ */
+
+var update_interval = '30 mins'
+var timeout = '30 secs'
+
+var Datastore = require('nedb')
+websites.forEach(function(app) {
+    app.db = new Datastore({ filename: 'data/' + app.name + '.nedb', autoload: true })
+})
 
 var app = express()
 app.set('views', __dirname + '/templates')
 app.set('view engine', 'hjs')
 
-var errors = {}
-
-var password = (credentials.password) ? (':' + credentials.password) : ''
-// Shortcut for querying postgres
-function queryPg(sql, params, callback) {
-  pg.connect(`postgres://${credentials.user}${password}@${credentials.host}:${credentials.port}/${credentials.database}`, function(err, client, done) {
-    if (err) { return callback(err) }
-
-    client.query(sql, params, function(err, result) {
-      done();
-      if (err) { return callback(err) }
-      callback(null, result);
-    })
-  })
-}
-
 function notifyFailure(app, code) {
-  // Ignore if we have already been notified of this error
-  if (errors[app.name]) {
-    return
-  }
-  errors[app.name] = true
-
-  var msg = app.name + ' encountered a ' + code + ' status code when making a request to ' + app.uri
-  request({
-    uri: 'https://api.telegram.org/bot269291694:AAFqndaV1PEGcXPlipPS7ZgbyVnmNjlAO5w/sendMessage?chat_id=-134845112&text=' + msg
-  })
+    var msg = app.name + ' encountered a ' + code + ' status code when making a request to ' + app.uri
+    request({
+        uri: 'https://api.telegram.org/' + bot + '/sendMessage?chat_id=' + chat_id + '&text=' + msg
+    })
 }
 
 function notifyFix(app, status) {
-  errors[app.name] = false
+    errors[app.name] = false
 
-  var msg = app.name + ' is back online' + ((status === 0) ? ', but is responding slowly' : ' and responding normally')
+    var msg = app.name + ' is online' + ((status === 0) ? ', but is responding slowly' : ' and responding normally')
 
-  request({
-    uri: 'https://api.telegram.org/bot269291694:AAFqndaV1PEGcXPlipPS7ZgbyVnmNjlAO5w/sendMessage?chat_id=-134845112&text=' + msg
-  })
+    request({
+        uri: 'https://api.telegram.org/' + bot + '/sendMessage?chat_id=' + chat_id + '&text=' + msg
+    })
 }
 
-// Update a given app's status
-function get(app, snap_id, callback) {
-  request({
-    uri: app.uri,
-    time: true,
-    timeout: 10000
-  }, function(error, response, body) {
-    var status = null;
+// Update a given website's status
+function get(website, callback) {
+    request({
+        uri: website.uri,
+        time: true,
+        timeout: timeout.split(/ /)[0] * 1000
+    },
+    function(error, response, body) {
+        var status = null;
 
-    if (error || response.statusCode != 200 || response.headers['content-length'] < 50) {
-      status = -1
-      var statusCode = (response && response.statusCode) ? response.statusCode : 500
-      notifyFailure(app, statusCode)
-    } else if (response.elapsedTime > (app.timeout || 1500)) {
-      status = 0
-      if (errors[app.name]) {
-        notifyFix(app, status)
-      }
-    } else {
-      status = 1
-      if (errors[app.name]) {
-        notifyFix(app, status)
-      }
-    }
-    var et = (response && response.elapsedTime) ? response.elapsedTime : null
-    queryPg('INSERT INTO application_status (app_id, snap_id, status, response_time) VALUES ($1, $2, $3, $4)', [app.app_id, snap_id, status, et], function(error) {
-      if (error) console.log(error);
-      return callback(null)
+        if (error || response.statusCode != 200 || response.headers['content-length'] < 50) {
+            status = -1
+            var statusCode = (response && response.statusCode) ? response.statusCode : 500
+            notifyFailure(website, statusCode)
+        } 
+        else if (response.elapsedTime > timeout) {
+            status = 0
+            if (errors[website.name]) {
+                notifyFix(website, status)
+            }
+        } 
+        else {
+            status = 1
+            if (errors[website.name]) {
+                notifyFix(website, status)
+            }
+        }
+        var response_time = (response && response.elapsedTime) ? response.elapsedTime : null
+
+        website.db.insert({
+            ts: new Date(),
+            status : status,
+            response_time : response_time
+        })
     })
-  })
 }
 
 // Update all apps
 function update() {
-  var snap_id = Math.random().toString(36).substring(7);
-  async.series([
-    function(callback) {
-      queryPg('INSERT INTO snapshots (snap_id) VALUES ($1)', [snap_id], function() {
-        callback(null)
-      })
-    },
-
-    function(callback) {
-      queryPg('SELECT app_id, name, uri, timeout FROM applications', [], function(error, result) {
-        async.each(result.rows, function(app, cb) {
-          get(app, snap_id, cb)
-        }, function(error, done) {
-          callback(null)
-        })
-      })
-    }
-  ], function(error) {
-  //  console.log('Done updating')
-  })
+    websites.forEach(function(website) {
+        get(website, cb)
+    })
 }
 
-setInterval(update, 60000);
+setInterval(
+    update, 
+    update_interval.split(/ /)[0] * 60000
+);
 
 app.get('/', function(req, res, next) {
-  queryPg(`
-    SELECT
-     applications.app_id,
-     category,
-     name,
-     uri,
-     status,
-     rt.mean_response
-    FROM applications
-    JOIN (
-      SELECT app_id, status
-      FROM application_status
-      WHERE snap_id = (
-        SELECT snap_id
-        FROM snapshots
-        ORDER BY start_time DESC
-        LIMIT 1
-      )
-    ) statuses ON applications.app_id = statuses.app_id
-    JOIN (
-      SELECT app_id, avg(response_time)::int mean_response
-      FROM application_status
-      GROUP BY app_id
-    ) rt ON rt.app_id = applications.app_id
-    ORDER BY applications.app_id ASC
-  `, [], function(error, result) {
+    var apps = []
+    websites.forEach(function(website, cb) {
+        website.db.find({})
+            .limit(2)
+            .exec(
+                function (err, docs) {
 
-    var categories = {}
-    result.rows.forEach(function(d) {
-      d._class = (d.status === 1) ? 'ion-ios-checkmark' : ((d.status === 0) ? 'ion-ios-help' : 'ion-ios-minus')
-      if (categories[d.category]) {
-        categories[d.category].push(d)
-      } else {
-        categories[d.category] = [d]
-      }
+                    app = {}
+                    app.name = website.name
+                    app.uri = website.uri
+                    app.data = []
+
+                    // docs is [doc3, doc1]
+                    docs.forEach(function(d) {
+                        d._class = d.status.toLowerCase()
+                        if (d.response_time < 1000) {
+                            d.response_time = Math.floor(d.response_time) + ' ms'
+                        }
+                        else if (d.response_time >= 1000 && d.response_time < 60000) {
+                            d.response_time = Math.floor(d.response_time / 1000) + ' secs'
+                        }
+                        else {
+                            d.response_time = 'more than a minute'
+                        }
+                        
+                        app.data.push(d)
+                    })
+
+                    apps.push(app)
+                    if (apps.length === websites.length) {
+                        res.render('main', {apps: apps})
+                    }
+                }
+            );
     })
-
-    var formatted = []
-    Object.keys(categories).forEach(function(d) {
-      formatted.push({
-        name: d,
-        apps: categories[d]
-      })
-    })
-
-    res.render('main', {data: formatted})
-  })
 })
-
 
 app.port = process.argv[2] || 5678;
 
 app.start = function() {
-  app.listen(app.port, function() {
-    console.log(`Listening on port ${app.port}`);
-  });
+    app.listen(app.port, function() {
+        console.log(`Listening on port ${app.port}`);
+    });
 }
 
 if (!module.parent) {
-  app.start();
+    app.start();
 }
-
 
 module.exports = app;
