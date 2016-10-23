@@ -45,7 +45,7 @@ function get(website, callback) {
             
         website.db.insert({
             ts: Date.now(),
-            status : status_code,
+            status_code : status_code,
             response_time : response_time
         })
     })

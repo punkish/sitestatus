@@ -33,14 +33,16 @@ td:last-child,th:last-child {
                 <thead>
                     <tr>
                         <th>time</th>
+                        <th>status code</th>
                         <th>status</th>
-                        <th>response</th>
+                        <th>response time</th>
                     </tr>
                 </thead>
                 <tbody>
                     {{#data}}
                     <tr class="table-rows">
                         <td>{{ts}}</td>
+                        <td>{{status_code}}</td>
                         <td class="right"><span class="{{status}}">{{status}}</span></td>
                         <td>{{response_time}}</td>
                     </tr>
