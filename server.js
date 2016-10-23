@@ -128,7 +128,7 @@ app.get('/', function(req, res, next) {
     var apps = []
     websites.forEach(function(website, cb) {
         website.db.find({})
-            .limit(2)
+            .limit(req.query["limit"] || 10)
             .exec(
                 function (err, docs) {
 
