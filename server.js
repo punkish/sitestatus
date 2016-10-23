@@ -1,56 +1,13 @@
+// start the app in production 
+//   $ NODE_ENV=production pm2 start server.js --name sitestatus
+
 var express = require('express')
 var request = require('request')
+var config = require("./config");
 
-var websites = [
-    {
-        name : 'TreatmentBank',
-        uri : 'http://tb.plazi.org/GgServer/static/newToday.html'
-    },
-    {
-        name : 'Plazi',
-        uri : 'http://plazi.org'
-    }
-]
-var bot = '253125261:AAGHnpONfoGVLFUT6ZbCSsLrkayN3r4_uis'
-var chat_id = '64476661'
-
-/*
- * The only way to get a chat_id for the message seems to be to send a `getUpdates` 
- * command to the bot via the api and look for the chat id in the response. For example
- * 
- * https://api.telegram.org/bot253125261:AAGHnpONfoGVLFUT6ZbCSsLrkayN3r4_uis/getUpdates
- * 
- * returns the following
- * 
- * {
- *      "ok":true,
- *      "result":{
- *          "message_id":3,
- *          "from":{
- *              "id":253125261,
- *              "first_name":"PlaziStatus",
- *              "username":"PlaziStatusBot"
- *          },
- *          "chat":{"
- *              id":64476661,
- *              "first_name":"punkish",
- *              "username":"punkish",
- *              "type":"private"
- *          },
- *          "date":1477158841,
- *          "text":"hello from Puneet"
- *      }
- * }
- * 
- * The chat_id I am looking for is 64476661
- * 
- */
-
-var update_interval = '30 mins'
-var timeout = '30 secs'
 
 var Datastore = require('nedb')
-websites.forEach(function(app) {
+config.websites.forEach(function(app) {
     app.db = new Datastore({ filename: 'data/' + app.name + '.nedb', autoload: true })
 })
 
@@ -61,7 +18,7 @@ app.set('view engine', 'hjs')
 function notifyFailure(app, code) {
     var msg = app.name + ' encountered a ' + code + ' status code when making a request to ' + app.uri
     request({
-        uri: 'https://api.telegram.org/' + bot + '/sendMessage?chat_id=' + chat_id + '&text=' + msg
+        uri: 'https://api.telegram.org/' + config.bot + '/sendMessage?chat_id=' + config.chat_id + '&text=' + msg
     })
 }
 
@@ -71,7 +28,7 @@ function notifyFix(app, status) {
     var msg = app.name + ' is online' + ((status === 0) ? ', but is responding slowly' : ' and responding normally')
 
     request({
-        uri: 'https://api.telegram.org/' + bot + '/sendMessage?chat_id=' + chat_id + '&text=' + msg
+        uri: 'https://api.telegram.org/' + config.bot + '/sendMessage?chat_id=' + config.chat_id + '&text=' + msg
     })
 }
 
@@ -80,7 +37,7 @@ function get(website, callback) {
     request({
         uri: website.uri,
         time: true,
-        timeout: timeout.split(/ /)[0] * 1000
+        timeout: config.timeout.split(/ /)[0] * 1000
     },
     function(error, response, body) {
         var status = null;
@@ -90,7 +47,7 @@ function get(website, callback) {
             var statusCode = (response && response.statusCode) ? response.statusCode : 500
             notifyFailure(website, statusCode)
         } 
-        else if (response.elapsedTime > timeout) {
+        else if (response.elapsedTime > config.timeout) {
             status = 0
             if (errors[website.name]) {
                 notifyFix(website, status)
@@ -114,19 +71,21 @@ function get(website, callback) {
 
 // Update all apps
 function update() {
-    websites.forEach(function(website) {
+    config.websites.forEach(function(website, cb) {
         get(website, cb)
     })
 }
 
 setInterval(
     update, 
-    update_interval.split(/ /)[0] * 60000
+    (config.update_interval.split(/ /)[1] === 'mins' 
+        ? config.update_interval.split(/ /)[0] * 60000
+        : config.update_interval.split(/ /)[0] * 1000)
 );
 
 app.get('/', function(req, res, next) {
     var apps = []
-    websites.forEach(function(website, cb) {
+    config.websites.forEach(function(website, cb) {
         website.db.find({})
             .limit(req.query["limit"] || 10)
             .exec(
@@ -140,6 +99,7 @@ app.get('/', function(req, res, next) {
                     // docs is [doc3, doc1]
                     docs.forEach(function(d) {
                         d._class = d.status.toLowerCase()
+
                         if (d.response_time < 1000) {
                             d.response_time = Math.floor(d.response_time) + ' ms'
                         }
@@ -147,14 +107,16 @@ app.get('/', function(req, res, next) {
                             d.response_time = Math.floor(d.response_time / 1000) + ' secs'
                         }
                         else {
-                            d.response_time = 'more than a minute'
+                            d.response_time = '> ' + Math.floor(d.response_time / 60000) + ' mins'
                         }
+
+                        d.ts = new Date(d.ts).toUTCString()
                         
                         app.data.push(d)
                     })
 
                     apps.push(app)
-                    if (apps.length === websites.length) {
+                    if (apps.length === config.websites.length) {
                         res.render('main', {apps: apps})
                     }
                 }
@@ -162,11 +124,11 @@ app.get('/', function(req, res, next) {
     })
 })
 
-app.port = process.env.NODE_PORT || 5678;
+//app.port = config.port;
 
 app.start = function() {
-    app.listen(app.port, function() {
-        console.log(`Listening on port ${app.port}`);
+    app.listen(config.port, function() {
+        console.log(`Listening on port ${config.port}`);
     });
 }
 
