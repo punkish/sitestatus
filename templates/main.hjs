@@ -4,13 +4,12 @@
         <meta charset="utf-8">
         <meta name="viewport" content="initial-scale=1, maximum-scale=1, user-scalable=yes, width=device-width">
         <title>websites status</title>
+        <link href="https://cdnjs.cloudflare.com/ajax/libs/normalize/5.0.0/normalize.min.css" rel="stylesheet">
         <link href="https://cdnjs.cloudflare.com/ajax/libs/skeleton/2.0.4/skeleton.min.css" rel="stylesheet">
         <style>
 .OK { color: #45BF55; }
 .SLOW { color: #FFB03B }
 .BAD { color: #D90000; }
-.right { text-align: right; }
-.content { margin: 0 auto; max-width: 500px; }
 .table-rows:nth-child(odd) { background-color: lightgrey; }
 .table-rows:nth-child(even) { background-color: #f5f5f5; }
 th {
@@ -24,32 +23,34 @@ td:last-child,th:last-child {
 }
         </style>
     </head>
-    <body>
-        <div class="content">
-            <h1>Website Status</h1>
-            {{#apps}}
-            <h4><a href="{{uri}}" target="_blank">{{name}}</a></h4>
-            <table class="u-full-width" cellspacing="0">
-                <thead>
-                    <tr>
-                        <th>time</th>
-                        <th>status code</th>
-                        <th>status</th>
-                        <th>response time</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {{#data}}
-                    <tr class="table-rows">
-                        <td>{{ts}}</td>
-                        <td>{{status_code}}</td>
-                        <td class="right"><span class="{{status}}">{{status}}</span></td>
-                        <td>{{response_time}}</td>
-                    </tr>
-                    {{/data}}
-                </tbody>
-            </table>
-            {{/apps}}
+    <body class="container">
+        <div class="row">
+            <div class="twelve columns">
+                <h1>Website Status</h1>
+                {{#apps}}
+                <h4><a href="{{uri}}" target="_blank">{{name}}</a></h4>
+                <table class="u-full-width" cellspacing="0">
+                    <thead>
+                        <tr>
+                            <th>time</th>
+                            <th>status code</th>
+                            <th>status</th>
+                            <th>response time</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {{#data}}
+                        <tr class="table-rows">
+                            <td>{{ts}}</td>
+                            <td>{{status_code}}</td>
+                            <td class="right"><span class="{{status}}">{{status}}</span></td>
+                            <td>{{response_time}}</td>
+                        </tr>
+                        {{/data}}
+                    </tbody>
+                </table>
+                {{/apps}}
+            </div>
         </div>
     </body>
 </html>
