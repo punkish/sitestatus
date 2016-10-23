@@ -105,7 +105,7 @@ function get(website, callback) {
         var response_time = (response && response.elapsedTime) ? response.elapsedTime : null
 
         website.db.insert({
-            ts: new Date(),
+            ts: Date.now(),
             status : status,
             response_time : response_time
         })
