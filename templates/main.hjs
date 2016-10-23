@@ -6,9 +6,9 @@
         <title>websites status</title>
         <link href="https://cdnjs.cloudflare.com/ajax/libs/skeleton/2.0.4/skeleton.min.css" rel="stylesheet">
         <style>
-.ok { color: #45BF55; }
-.slow { color: #FFB03B }
-.bad { color: #D90000; }
+.OK { color: #45BF55; }
+.SLOW { color: #FFB03B }
+.BAD { color: #D90000; }
 .right { text-align: right; }
 .content { margin: 0 auto; max-width: 500px; }
 .table-rows:nth-child(odd) { background-color: lightgrey; }
@@ -32,7 +32,7 @@ td:last-child,th:last-child {
             <table class="u-full-width" cellspacing="0">
                 <thead>
                     <tr>
-                        <th>timestamp</th>
+                        <th>time</th>
                         <th>status</th>
                         <th>response</th>
                     </tr>
@@ -41,7 +41,7 @@ td:last-child,th:last-child {
                     {{#data}}
                     <tr class="table-rows">
                         <td>{{ts}}</td>
-                        <td class="right"><span class="{{_class}}">{{status}}</span></td>
+                        <td class="right"><span class="{{status}}">{{status}}</span></td>
                         <td>{{response_time}}</td>
                     </tr>
                     {{/data}}
