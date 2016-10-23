@@ -15,7 +15,7 @@ module.exports = (function(mode) {
             ],
 
             // Monitoring frequency
-            update_interval : '30 mins',
+            update_interval : '30 secs',
 
             // More than 30 secs is too slow
             timeout : '30 secs',

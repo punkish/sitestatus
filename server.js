@@ -5,15 +5,16 @@ var express = require('express')
 var request = require('request')
 var config = require("./config");
 var Datastore = require('nedb')
-config.websites.forEach(function(app) {
-    app.db = new Datastore({ filename: 'data/' + app.name + '.nedb', autoload: true })
+
+var status_cache = {}
+config.websites.forEach(function(website) {
+    website.db = new Datastore({ filename: 'data/' + website.name + '.nedb', autoload: true })
+    status_cache[website.name] = ''
 })
 
 var app = express()
 app.set('views', __dirname + '/templates')
 app.set('view engine', 'hjs')
-
-var status_cache = ''
 
 // Update a given website's status
 function get(website, callback) {
@@ -46,13 +47,13 @@ function get(website, callback) {
             msg += " is working normally"
         }
 
-        if (status_cache !== this_status) {
+        if (status_cache[website.name] !== this_status) {
 
             // https://api.telegram.org/bot253125261:AAGHnpONfoGVLFUT6ZbCSsLrkayN3r4_uis/sendMessage?chat_id=64476661&text=This%20Fis%20Fa%20Ftest
             request({
                 uri: 'https://api.telegram.org/bot' + config.bot + '/sendMessage?chat_id=' + config.chat_id + '&text=' + msg
             })
-            status_cache = this_status
+            status_cache[website.name] = this_status
         }
         
         var record = {
