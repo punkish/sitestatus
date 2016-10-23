@@ -40,14 +40,16 @@ function get(website, callback) {
         }
 
         request({
-            uri: 'https://api.telegram.org/' + config.bot + '/sendMessage?chat_id=' + config.chat_id + '&text=' + msg
+            uri: 'https://api.telegram.org/bot' + config.bot + '/sendMessage?chat_id=' + config.chat_id + '&text=' + msg
         })
-            
-        website.db.insert({
+        
+        var record = {
             ts: Date.now(),
             status_code : status_code,
             response_time : response_time
-        })
+        }
+
+        website.db.insert(record)
     })
 }
 
@@ -108,8 +110,6 @@ app.get('/', function(req, res, next) {
             );
     })
 })
-
-//app.port = config.port;
 
 app.start = function() {
     app.listen(config.port, function() {
