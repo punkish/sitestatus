@@ -1,3 +1,3 @@
 .DS_Store
-.nedb
+data/*.nedb
 node_modules
