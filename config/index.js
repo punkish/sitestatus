@@ -54,7 +54,8 @@ module.exports = (function(mode) {
             * The chat_id I am looking for is 64476661
             * 
             */
-            chat_id : '64476661'
+            //chat_id : '64476661'
+            chat_id : '-170396027'
         },
         development: {
             port: 5678

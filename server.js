@@ -13,6 +13,8 @@ var app = express()
 app.set('views', __dirname + '/templates')
 app.set('view engine', 'hjs')
 
+var status_cache = ''
+
 // Update a given website's status
 function get(website, callback) {
     request({
@@ -26,22 +28,32 @@ function get(website, callback) {
         var status_code = (response && response.statusCode) ? response.statusCode : 500
         var msg = website.uri;
 
+        var this_status = ''
         if (error) {
+            this_status = 'A'
             msg += " caused the error: " + error;
         }
         else if (response.statusCode != 200 || response.headers['content-length'] < 50) {
+            this_status = 'B'
             msg += " is not up, responding with: " + response.statusCode;
         }
         else if (response.elapsedTime > config.timeout) {
+            this_status = 'C'
             msg += " is up but responding slowly"
         }
         else {
+            this_status = 'D'
             msg += " is working normally"
         }
 
-        request({
-            uri: 'https://api.telegram.org/bot' + config.bot + '/sendMessage?chat_id=' + config.chat_id + '&text=' + msg
-        })
+        if (status_cache !== this_status) {
+
+            // https://api.telegram.org/bot253125261:AAGHnpONfoGVLFUT6ZbCSsLrkayN3r4_uis/sendMessage?chat_id=64476661&text=This%20Fis%20Fa%20Ftest
+            request({
+                uri: 'https://api.telegram.org/bot' + config.bot + '/sendMessage?chat_id=' + config.chat_id + '&text=' + msg
+            })
+            status_cache = this_status
+        }
         
         var record = {
             ts: Date.now(),
