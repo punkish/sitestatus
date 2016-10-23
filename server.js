@@ -162,7 +162,7 @@ app.get('/', function(req, res, next) {
     })
 })
 
-app.port = process.argv[2] || 5678;
+app.port = process.env.NODE_PORT || 5678;
 
 app.start = function() {
     app.listen(app.port, function() {
