@@ -1,6 +1,6 @@
 # sitestatus
 
-a simple dashboard for monitoring websites, forked from one whipped up by jczaplew
+a simple dashboard for monitoring websites, forked from one whipped up by [jczaplew](https://github.com/jczaplew)
 
 ## Installation
 
@@ -38,4 +38,4 @@ Get a Chat ID by starting a chat with with bot. Send a `getUpdates` command to t
              
 The chat_id you are looking for is `64476661`, update its value in [config](config/index.js)
 
-* **Note:** if you want to set up a group chat, first create a group with the bot as a member and then initiate a chat in that group.*
+***Note:** if you want to set up a group chat, first create a group with the bot as a member and then initiate a chat in that group.*
