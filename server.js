@@ -60,11 +60,9 @@ function get(website, callback) {
 
         if (status_cache[website.name] !== this_status) {
 
-            /*
             request({
                 uri: 'https://api.telegram.org/bot' + config.bot + '/sendMessage?chat_id=' + config.chat_id + '&text=' + msg
             })
-            */
 
             status_cache[website.name] = this_status;
         }
@@ -75,8 +73,7 @@ function get(website, callback) {
             rt : response_time
         };
 
-        //website.db.insert(record);
-        console.log(record);
+        website.db.insert(record);
     });
 }
 
