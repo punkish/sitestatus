@@ -12,45 +12,66 @@
 .BAD { color: #D90000; }
 .table-rows:nth-child(odd) { background-color: lightgrey; }
 .table-rows:nth-child(even) { background-color: #f5f5f5; }
-th {
-	border-bottom:2px double #000;
+th, td {
+  font-size: 0.9em;
 }
-td:first-child,th:first-child {
-	padding-left:12px;
+th { border-bottom:2px double #000; }
+td:first-child,th:first-child { padding-left:12px; }
+td:last-child,th:last-child { padding-right:12px; }
+.footnote { font-size: 0.8em; border-top: 1px dotted black; margin-bottom: 2em; }
+sup a {
+  text-decoration: none;
+  color: black;
 }
-td:last-child,th:last-child {
-	padding-right:12px;
+sup {
+  border: 1px solid grey;
+  border-radius: 5px;
+  background-color: #f5f5f5;
+}
+sup:hover {
+  background-color: yellow;
 }
         </style>
     </head>
     <body class="container">
         <div class="row">
             <div class="twelve columns">
-                <h1>Website Status</h1>
+                <h1><a name="fnref:website"></a>Website Status<sup><a href="#fn_website">?</a></sup></h1>
                 {{#apps}}
                 <h4><a href="{{uri}}" target="_blank">{{name}}</a></h4>
                 <table class="u-full-width" cellspacing="0">
                     <thead>
                         <tr>
                             <th>time</th>
-                            <th>status code</th>
-                            <th>status</th>
-                            <th>response time</th>
+                            <th>status code<sup><a href="#fn1{{name}}">1</a></sup></th>
+                            <!--<th>status<sup><a href="#fn2{{name}}">2</a></sup></th>-->
+                            <th>response time<sup><a href="#fn2{{name}}">2</a></sup></th>
                         </tr>
                     </thead>
                     <tbody>
                         {{#data}}
                         <tr class="table-rows">
                             <td>{{ts}}</td>
-                            <td>{{status_code}}</td>
-                            <td class="right"><span class="{{status}}">{{status}}</span></td>
-                            <td>{{response_time}}</td>
+                            <td><span class="{{sc_class}}">{{sc}}: {{sc_desc}}</span></td>
+                            <!--<td class="right"><span class="{{status}}">{{status}}</span></td>-->
+                            <td><span class="{{status}}">{{rt}}</span></td>
                         </tr>
                         {{/data}}
                     </tbody>
                 </table>
+                <ol class="footnote">
+                    <li><a name="fn1{{name}}"></a> <b>status code</b> is the HTTP code returned from the website. 2XX is good, 3XX is redirection, 4XX is resource not found, and 5XX is <i>snafu</i>.</li>
+
+                    <!--<li><a name="fn2{{name}}"></a> <b>status</b> is simply a subjective statement on response time. We consider a response time of less than a second to be <span class="OK">OK</span>, between 1 sec and a min to be <span class="SLOW">SLOW</span> and more than a minute to be <span class="BAD">BAD</span></li>-->
+
+                    <li><a name="fn2{{name}}"></a> <b>response time</b> measures how quickly a reply was received from the server. We consider a response time of less than a second to be <span class="OK">ok</span>, between 1 sec and a min to be <span class="SLOW">slow</span> and more than a minute to be <span class="BAD">bad</span>. <i><b>Note:</b> It is possible to get a 5XX (internal server error), that is, something is wrong with the web application, and yet, get that error back quickly, so have a good response time.</i></li>
+                </ol>
                 {{/apps}}
             </div>
         </div>
+
+        <footer class="row">
+            <a name="fn_website"></a><p class="twelve columns" xmlns:dct="http://purl.org/dc/terms/" xmlns:vcard="http://www.w3.org/2001/vcard-rdf/3.0#">This website and <a href="https://github.com/punkish/sitestatus" target="_blank">the code behind it</a> are <a rel="license" href="http://creativecommons.org/publicdomain/zero/1.0/">published under a CC0 Public Domain Dedication</a>. <a href="#fnref:website"> ↩</a></p>
+        </footer>
     </body>
 </html>
