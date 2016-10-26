@@ -1,0 +1,42 @@
+module.exports = (function(mode) {
+    var config = {
+        common : {
+
+            // List websites to be monitored
+            websites : [
+                {
+                    name : 'Website 1',
+                    uri : 'http://website1'
+                },
+                {
+                    name : 'Website 2',
+                    uri : 'http://website2'
+                }
+            ],
+
+            // Monitoring frequency
+            update_interval : '30 mins',
+
+            // timeout for request
+            timeout : '30 secs',
+
+            /* Telegram bot settings */
+            // bot token and chat id… see README.md
+            bot : '************************************************',
+            chat_id : '************'
+        },
+        development: {
+            port: 5678
+        },
+        production: {
+            port: 9000,
+        }
+    };
+
+    var tmp = config[mode || process.env.NODE_ENV || 'development'];
+    for (var i in config.common) {
+        tmp[i] = config.common[i];
+    }
+    
+    return tmp;
+})();
