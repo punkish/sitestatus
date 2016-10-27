@@ -106,7 +106,7 @@ app.get('/', function(req, res, next) {
                     // docs is [doc3, doc1];
                     docs.forEach(function(d) {
                         if (typeof(d.rt) === 'object') {
-                            d.rt = 'no connection';
+                            d.rt = '--';
                             d.status = 'BAD';
                         }
                         else {
@@ -133,7 +133,8 @@ app.get('/', function(req, res, next) {
                         }
                         
                         if (typeof(d.sc) === "object" && "code" in d.sc) {
-                            d.sc_desc = d.sc.connect;
+
+                            d.sc_desc = 'no connection';
                             d.sc = d.sc.code;
                             d.sc_class = 'BAD';
                         }

@@ -2,4 +2,3 @@
 data/*.nedb
 node_modules
 config/index.js
-
