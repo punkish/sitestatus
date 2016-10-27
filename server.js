@@ -105,17 +105,24 @@ app.get('/', function(req, res, next) {
 
                     // docs is [doc3, doc1];
                     docs.forEach(function(d) {
-                        if (d.rt < 1000) {
-                            d.status = 'OK';
-                        }
-                        else if (d.rt >= 1000 && d.rt < 60000) {
-                            d.status = 'SLOW';
-                        }
-                        else {
+                        if (typeof(d.rt) === 'object') {
+                            d.rt = 'no connection';
                             d.status = 'BAD';
                         }
+                        else {
+                            if (d.rt < 1000) {
+                                d.status = 'OK';
+                            }
+                            else if (d.rt >= 1000 && d.rt < 60000) {
+                                d.status = 'SLOW';
+                            }
+                            else {
+                                d.status = 'BAD';
+                            }
+
+                            d.rt = utils.t2str(d.rt);
+                        }
                         
-                        d.rt = utils.t2str(d.rt);
                         d.ts = new Date(d.ts).toUTCString();
 
                         if (d.sc < 300) {
@@ -124,8 +131,16 @@ app.get('/', function(req, res, next) {
                         else if (d.sc > 400) {
                             d.sc_class = 'BAD';
                         }
-                        d.sc_desc = status_codes[d.sc].split(': ')[0];
-
+                        
+                        if (typeof(d.sc) === "object" && "code" in d.sc) {
+                            d.sc_desc = d.sc.connect;
+                            d.sc = d.sc.code;
+                            d.sc_class = 'BAD';
+                        }
+                        else {
+                            d.sc_desc = status_codes[d.sc].split(': ')[0];
+                        }
+                        
                         app.data.push(d);
                     });
 
