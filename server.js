@@ -1,10 +1,10 @@
 // start the app in production 
-//   $ NODE_ENV=production pm2 start server.js --name sitestatus
+//   $ NODE_ENV=production pm2 start server.js --name plazistatus
 
 var express = require('express');
 var request = require('request');
 var Datastore = require('nedb');
-var config = require('./config/index.js');
+var config = require('./config');
 var utils = require('./lib/utils.js');
 var status_codes = require('./lib/http_status_codes.js');
 
